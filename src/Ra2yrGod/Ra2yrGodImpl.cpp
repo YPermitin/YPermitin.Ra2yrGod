@@ -14,6 +14,7 @@ namespace Ra2yrGodImpl
     {
         resetState();
     }
+    
     bool Ra2yrGod::initProcess() {
         // 0. Перед запуском сбрасываем состояние
         resetState();
