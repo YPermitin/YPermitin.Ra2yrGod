@@ -35,6 +35,7 @@ namespace Ra2yrGod
         if (ImGui::Button(mainCommandLabel.c_str()))
         {
             god.initProcess();
+            processConnected = god.processConnected(true);
 
             playerMoney = god.getPlayerMoney();
 

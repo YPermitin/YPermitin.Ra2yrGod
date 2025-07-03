@@ -8,16 +8,16 @@ namespace Ra2yrGodImpl
 {
     Ra2yrGod::Ra2yrGod()
     {
-        processId = -1;
-        processName = "-";
-        processHandle = nullptr;
-        processHandleValid = false;
-        processBaseModule = nullptr;
-        lastProcessHandleCheck = -1;
-
-        playerMoneyFrozen = false;
+        resetState();
+    }
+    Ra2yrGod::~Ra2yrGod()
+    {
+        resetState();
     }
     bool Ra2yrGod::initProcess() {
+        // 0. Перед запуском сбрасываем состояние
+        resetState();
+
         // 1. Находим процесс игры и получаем доступ к процессу
         // Находим окно игры
         HWND hwnd = FindWindowA(NULL, "Ra2: Reborn");
@@ -56,7 +56,7 @@ namespace Ra2yrGodImpl
         processId = -1;
         return false;
     }
-    bool Ra2yrGod::processConnected()
+    bool Ra2yrGod::processConnected(bool forceCheck)
     {
         // Информация о процессе не была инициализирована
         if (processId <= 0)
@@ -65,28 +65,28 @@ namespace Ra2yrGodImpl
         }
 
         // Дескриптор процесса не определен
-        if (processHandle == nullptr)
+        if (processHandle == nullptr || processHandle == INVALID_HANDLE_VALUE)
         {
             return false;
         }
 
-        // Проверку выполняем не чаще, чем 1 раз в 1 секунд
-        time_t currentDateTime;
-        time(&currentDateTime);
-        int lastCheckTimeLeftSec = std::difftime(currentDateTime, lastProcessHandleCheck);
-        if (lastCheckTimeLeftSec < 1)
+        if (!forceCheck)
         {
-            return processHandleValid;
+            // Проверку выполняем не чаще, чем 1 раз в 1 секунд
+            time_t currentDateTime;
+            time(&currentDateTime);
+            int lastCheckTimeLeftSec = std::difftime(currentDateTime, lastProcessHandleCheck);
+            if (lastCheckTimeLeftSec < 1)
+            {
+                return processHandleValid;
+            }
         }
 
         // Проверяем фактически запущенный процесс по дескриптору
         processHandleValid = Ra2yrGodHelper::isProcessRunning(processHandle);
         if (!processHandleValid)
         {
-            processId = -1;
-            processName = "-";
-            processHandle = nullptr;
-            processBaseModule = nullptr;
+            resetState();
         }
         else
         {
@@ -108,60 +108,69 @@ namespace Ra2yrGodImpl
     {
         int moneyValue = -1;
        
-        // 1-2. Используем данные ранее найденного процесса
-        ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
-
-        // 3. Получаем значение баланса игрока.
-        std::vector<int> offsets
+        if (processConnected())
         {
-            0x0070F6CC,
-            0,
-            0x2C,
-            0x258,
-            0x4C,
-            0x2C,
-            0x30C
-        };
+            // 1-2. Используем данные ранее найденного процесса
+            ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
 
-        moneyValue = Ra2yrGodHelper::ReadRemotePointer<int, int>(processHandle, baseModuleAddress, offsets);
+            // 3. Получаем значение баланса игрока.
+            std::vector<int> offsets
+            {
+                0x0070F6CC,
+                0,
+                0x2C,
+                0x258,
+                0x4C,
+                0x2C,
+                0x30C
+            };
+
+            moneyValue = Ra2yrGodHelper::ReadRemotePointer<int, int>(processHandle, baseModuleAddress, offsets);
+        }
 
         return moneyValue;
     }  
     void Ra2yrGod::setPlayerMoney(int money)
     {
-        // 1-2. Используем данные ранее найденного процесса
-        ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
-
-        // 3. Получаем значение баланса игрока.
-        std::vector<int> offsets
+        if (processConnected())
         {
-            0x0070F6CC,
-            0,
-            0x2C,
-            0x258,
-            0x4C,
-            0x2C,
-            0x30C
-        };
+            // 1-2. Используем данные ранее найденного процесса
+            ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
 
-        Ra2yrGodHelper::SetRemotePointer<int, int>(processHandle, baseModuleAddress, offsets, money);
+            // 3. Получаем значение баланса игрока.
+            std::vector<int> offsets
+            {
+                0x0070F6CC,
+                0,
+                0x2C,
+                0x258,
+                0x4C,
+                0x2C,
+                0x30C
+            };
+
+            Ra2yrGodHelper::SetRemotePointer<int, int>(processHandle, baseModuleAddress, offsets, money);
+        }
     }
     void Ra2yrGod::freezePlayerMoney(bool enable, int targetMoney)
     {
-        if (enable)
+        if (processConnected())
         {
-            playerMoneyFrozen = true;
-            std::thread frozenMoneyTask(
-                [this, targetMoney]
-                {
-                    this->freezePlayerMoneyTask(targetMoney);
-                }
-            );
-            frozenMoneyTask.detach();
-        }
-        else
-        {
-            playerMoneyFrozen = false;
+            if (enable)
+            {
+                playerMoneyFrozen = true;
+                std::thread frozenMoneyTask(
+                    [this, targetMoney]
+                    {
+                        this->freezePlayerMoneyTask(targetMoney);
+                    }
+                );
+                frozenMoneyTask.detach();
+            }
+            else
+            {
+                playerMoneyFrozen = false;
+            }
         }
     }
     bool Ra2yrGod::playerMoneyFrozenState()
@@ -169,6 +178,19 @@ namespace Ra2yrGodImpl
         return playerMoneyFrozen;
     }
 
+    void Ra2yrGod::resetState()
+    {
+        Ra2yrGodHelper::CloseHandleSafe(processHandle);
+
+        processId = -1;
+        processName = "-";
+        processHandle = nullptr;
+        processHandleValid = false;
+        processBaseModule = nullptr;
+        lastProcessHandleCheck = -1;
+
+        playerMoneyFrozen = false;
+    }
     void Ra2yrGod::freezePlayerMoneyTask(int targetMoney)
     {
         while (playerMoneyFrozen)

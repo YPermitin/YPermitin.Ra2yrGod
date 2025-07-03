@@ -10,6 +10,8 @@ namespace Ra2yrGodHelper
 
     bool isProcessRunning(HANDLE process);
 
+    bool CloseHandleSafe(HANDLE& h);
+
     template<typename T, typename R>
     R ReadRemotePointer(HANDLE hProcess,
         T baseAddress,

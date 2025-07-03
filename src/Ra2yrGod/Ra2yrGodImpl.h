@@ -16,9 +16,10 @@ namespace Ra2yrGodImpl
         bool playerMoneyFrozen;
     public:
         Ra2yrGod();
+        ~Ra2yrGod();
 
         bool initProcess();
-        bool processConnected();
+        bool processConnected(bool forceCheck = false);
 
         int getProcessId();
         std::string getProcessName();
@@ -29,6 +30,7 @@ namespace Ra2yrGodImpl
         void freezePlayerMoney(bool enable, int targetMoney);
 
     private:
+        void resetState();
         void freezePlayerMoneyTask(int targetMoney);
     };
 }

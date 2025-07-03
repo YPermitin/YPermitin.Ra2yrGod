@@ -52,4 +52,13 @@ namespace Ra2yrGodHelper
         // Return if the process is still active
         return exitCodeOut == STILL_ACTIVE;
     }
+
+    bool CloseHandleSafe(HANDLE& h) {
+        if (h != nullptr && h && h != INVALID_HANDLE_VALUE) {
+            bool result = CloseHandle(h);
+            h = nullptr;
+            return result;
+        }
+        return TRUE;
+    }
 }
