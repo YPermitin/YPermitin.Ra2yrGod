@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <iostream>
 #include "windows.h"
@@ -12,6 +12,8 @@ namespace Ra2yrGodHelper
 
     bool CloseHandleSafe(HANDLE& h);
 
+    HWND FindWindowByProcessAndTitle(const std::wstring& processName, const std::wstring& windowTitle);
+
     template<typename T, typename R>
     R ReadRemotePointer(HANDLE hProcess,
         T baseAddress,
@@ -21,7 +23,7 @@ namespace Ra2yrGodHelper
         T nextPtr = 0;
 
         for (auto off : offsets) {
-            // читаем из адреса (addr + off)
+            // С‡РёС‚Р°РµРј РёР· Р°РґСЂРµСЃР° (addr + off)
             if (!ReadProcessMemory(hProcess,
                 reinterpret_cast<LPCVOID>(addr + off),
                 &nextPtr,
@@ -54,8 +56,8 @@ namespace Ra2yrGodHelper
 
             if (totalOffsets == currentOffsetNumber)
             {
-                // Последнее смещение адреса в памяти используется
-                // для установки конкретного значения.
+                // РџРѕСЃР»РµРґРЅРµРµ СЃРјРµС‰РµРЅРёРµ Р°РґСЂРµСЃР° РІ РїР°РјСЏС‚Рё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+                // РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ.
                 auto newValueAddress = reinterpret_cast<LPVOID>(addr + off);
 
                 if (!WriteProcessMemory(hProcess,
@@ -68,8 +70,8 @@ namespace Ra2yrGodHelper
                 }
             } else
             {
-                // читаем из адреса (addr + off).
-                // По этому указателю находим следующий адрес в цепочке.
+                // С‡РёС‚Р°РµРј РёР· Р°РґСЂРµСЃР° (addr + off).
+                // РџРѕ СЌС‚РѕРјСѓ СѓРєР°Р·Р°С‚РµР»СЋ РЅР°С…РѕРґРёРј СЃР»РµРґСѓСЋС‰РёР№ Р°РґСЂРµСЃ РІ С†РµРїРѕС‡РєРµ.
                 if (!ReadProcessMemory(hProcess,
                     reinterpret_cast<LPCVOID>(addr + off),
                     &nextPtr,

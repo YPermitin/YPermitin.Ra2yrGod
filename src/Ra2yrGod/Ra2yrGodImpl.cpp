@@ -1,4 +1,4 @@
-#include "Ra2yrGodImpl.h"
+п»ї#include "Ra2yrGodImpl.h"
 #include "Ra2yrGodHelper.h"
 
 #include <ctime>
@@ -16,16 +16,16 @@ namespace Ra2yrGodImpl
     }
     
     bool Ra2yrGod::initProcess() {
-        // 0. Перед запуском сбрасываем состояние
+        // 0. РџРµСЂРµРґ Р·Р°РїСѓСЃРєРѕРј СЃР±СЂР°СЃС‹РІР°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ
         resetState();
 
-        // 1. Находим процесс игры и получаем доступ к процессу
-        // Находим окно игры
-        HWND hwnd = FindWindowA(NULL, "Ra2: Reborn");
+        // 1. РќР°С…РѕРґРёРј РїСЂРѕС†РµСЃСЃ РёРіСЂС‹ Рё РїРѕР»СѓС‡Р°РµРј РґРѕСЃС‚СѓРї Рє РїСЂРѕС†РµСЃСЃСѓ
+        // РќР°С…РѕРґРёРј РѕРєРЅРѕ РёРіСЂС‹
+        HWND hwnd = Ra2yrGodHelper::FindWindowByProcessAndTitle(L"gamerb.exe", L"Ra2: Reborn");
         DWORD procID;
-        // Получаем идентификатор процесса
+        // РџРѕР»СѓС‡Р°РµРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РїСЂРѕС†РµСЃСЃР°
         GetWindowThreadProcessId(hwnd, &procID);
-        // Получаем доступ к процессу. В результате получим дескриптор процесса.
+        // РџРѕР»СѓС‡Р°РµРј РґРѕСЃС‚СѓРї Рє РїСЂРѕС†РµСЃСЃСѓ. Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїРѕР»СѓС‡РёРј РґРµСЃРєСЂРёРїС‚РѕСЂ РїСЂРѕС†РµСЃСЃР°.
         processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procID);
         if (hwnd == 0x0 || processHandle == 0x0 || procID == 0)
         {
@@ -35,12 +35,12 @@ namespace Ra2yrGodImpl
         }
         processId = procID;
 
-        // 2. Находим базовый модуль и его адрес
+        // 2. РќР°С…РѕРґРёРј Р±Р°Р·РѕРІС‹Р№ РјРѕРґСѓР»СЊ Рё РµРіРѕ Р°РґСЂРµСЃ
         std::string baseModuleName;
         processBaseModule = Ra2yrGodHelper::getBaseModuleInfo(processHandle, baseModuleName);
         ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
 
-        // 3. Извлекаем имя процесса из полного имени модуля
+        // 3. РР·РІР»РµРєР°РµРј РёРјСЏ РїСЂРѕС†РµСЃСЃР° РёР· РїРѕР»РЅРѕРіРѕ РёРјРµРЅРё РјРѕРґСѓР»СЏ
         int startIndex = baseModuleName.rfind('\\');
         if (startIndex != std::string::npos)
         {
@@ -59,13 +59,13 @@ namespace Ra2yrGodImpl
     }
     bool Ra2yrGod::processConnected(bool forceCheck)
     {
-        // Информация о процессе не была инициализирована
+        // РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїСЂРѕС†РµСЃСЃРµ РЅРµ Р±С‹Р»Р° РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР°
         if (processId <= 0)
         {
             return false;
         }
 
-        // Дескриптор процесса не определен
+        // Р”РµСЃРєСЂРёРїС‚РѕСЂ РїСЂРѕС†РµСЃСЃР° РЅРµ РѕРїСЂРµРґРµР»РµРЅ
         if (processHandle == nullptr || processHandle == INVALID_HANDLE_VALUE)
         {
             return false;
@@ -73,7 +73,7 @@ namespace Ra2yrGodImpl
 
         if (!forceCheck)
         {
-            // Проверку выполняем не чаще, чем 1 раз в 1 секунд
+            // РџСЂРѕРІРµСЂРєСѓ РІС‹РїРѕР»РЅСЏРµРј РЅРµ С‡Р°С‰Рµ, С‡РµРј 1 СЂР°Р· РІ 1 СЃРµРєСѓРЅРґ
             time_t currentDateTime;
             time(&currentDateTime);
             int lastCheckTimeLeftSec = std::difftime(currentDateTime, lastProcessHandleCheck);
@@ -83,7 +83,7 @@ namespace Ra2yrGodImpl
             }
         }
 
-        // Проверяем фактически запущенный процесс по дескриптору
+        // РџСЂРѕРІРµСЂСЏРµРј С„Р°РєС‚РёС‡РµСЃРєРё Р·Р°РїСѓС‰РµРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ РїРѕ РґРµСЃРєСЂРёРїС‚РѕСЂСѓ
         processHandleValid = Ra2yrGodHelper::isProcessRunning(processHandle);
         if (!processHandleValid)
         {
@@ -111,10 +111,10 @@ namespace Ra2yrGodImpl
        
         if (processConnected())
         {
-            // 1-2. Используем данные ранее найденного процесса
+            // 1-2. РСЃРїРѕР»СЊР·СѓРµРј РґР°РЅРЅС‹Рµ СЂР°РЅРµРµ РЅР°Р№РґРµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
             ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
 
-            // 3. Получаем значение баланса игрока.
+            // 3. РџРѕР»СѓС‡Р°РµРј Р·РЅР°С‡РµРЅРёРµ Р±Р°Р»Р°РЅСЃР° РёРіСЂРѕРєР°.
             std::vector<int> offsets
             {
                 0x0070F6CC,
@@ -135,10 +135,10 @@ namespace Ra2yrGodImpl
     {
         if (processConnected())
         {
-            // 1-2. Используем данные ранее найденного процесса
+            // 1-2. РСЃРїРѕР»СЊР·СѓРµРј РґР°РЅРЅС‹Рµ СЂР°РЅРµРµ РЅР°Р№РґРµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
             ULONG_PTR baseModuleAddress = (ULONG_PTR)processBaseModule;
 
-            // 3. Получаем значение баланса игрока.
+            // 3. РџРѕР»СѓС‡Р°РµРј Р·РЅР°С‡РµРЅРёРµ Р±Р°Р»Р°РЅСЃР° РёРіСЂРѕРєР°.
             std::vector<int> offsets
             {
                 0x0070F6CC,
